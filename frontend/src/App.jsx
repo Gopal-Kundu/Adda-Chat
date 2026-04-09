@@ -21,6 +21,8 @@ import {
   setNewChat,
   setNewGroup,
   setNewMsgCount,
+  updateMessagesToSeen,
+  updateSingleMessageToSeen
 } from "../redux/chatSlice";
 import { RightSideBar } from "./components/RightSideBar";
 import LoadingPage from "./pages/LoadingPage";
@@ -85,14 +87,11 @@ const App = () => {
 
     const handleIncomingMessage = (msg) => dispatch(setMsg(msg));
 
-    const handleIncomingChat = (chat) =>
-      dispatch(setNewChat({ user: chat }));
+    const handleIncomingChat = (chat) => dispatch(setNewChat({ user: chat }));
 
-    const handleNewMsgCount = (data) =>
-      dispatch(setNewMsgCount(data));
+    const handleNewMsgCount = (data) => dispatch(setNewMsgCount(data));
 
-    const handleGroupMsg = (data) =>
-      dispatch(setGroupMsg(data));
+    const handleGroupMsg = (data) => dispatch(setGroupMsg(data));
 
     const handleCreateGroup = (data) => {
       if (data.members.includes(user._id)) {
@@ -106,6 +105,12 @@ const App = () => {
       }
     };
 
+    const handleMessagesSeen = (data) => dispatch(updateMessagesToSeen(data));
+
+    const handleInstantlySeen = (data) => dispatch(updateSingleMessageToSeen(data));
+
+    socket.on("Messages_marked_seen", handleMessagesSeen);
+    socket.on("Message_seen_instantly", handleInstantlySeen);
     socket.on("Msg_from_sender", handleIncomingMessage);
     socket.on("New_Chat", handleIncomingChat);
     socket.on("New_Msg_Count", handleNewMsgCount);
@@ -114,6 +119,8 @@ const App = () => {
     socket.on("new_group_Msg", handleIncreaseGroupCount);
 
     return () => {
+      socket.off("Messages_marked_seen", handleMessagesSeen);
+      socket.off("Message_seen_instantly", handleInstantlySeen);
       socket.off("Msg_from_sender", handleIncomingMessage);
       socket.off("New_Chat", handleIncomingChat);
       socket.off("New_Msg_Count", handleNewMsgCount);

@@ -3,6 +3,7 @@ import {
   deleteChat,
   getAllChats,
   getAllMessage,
+  markMessagesAsSeen,
   sendMessage,
   setMsgCountZero,
 } from "../controllers/message.controller.js";
@@ -36,6 +37,6 @@ router.post(
 );
 router.get("/deleteChat/:id",isAuthenticated, deleteChat);
 router.get("/setmsgcount/:id",isAuthenticated, setMsgCountZero);
-
+router.get("/seen/:id", isAuthenticated, markMessagesAsSeen);
 
 export default router;

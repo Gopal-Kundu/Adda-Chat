@@ -115,10 +115,13 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ success: false });
     }
 
+    const isChatOpen = activeChats[receiverId]?.toString() === senderId.toString();
+
     const newMessage = await Message.create({
       senderId,
       receiverId,
       message,
+      status: isChatOpen ? "seen" : "sent"
     });
 
     const sender = await User.findById(senderId).select("-password");
@@ -139,9 +142,6 @@ export const sendMessage = async (req, res) => {
     const receiver = await User.findById(receiverId);
     let receiverConv = await Conversation.findById(receiver.connectedUsers);
 
-    const isChatOpen =
-      activeChats[receiverId]?.toString() === senderId.toString();
-
     let receiverNewMsgCount = 0;
 
     if (!receiverConv) {
@@ -151,18 +151,19 @@ export const sendMessage = async (req, res) => {
       });
       receiver.connectedUsers = receiverConv._id;
       io.to(getSocketId(receiverId)).emit("New_Chat", sender);
+      receiverNewMsgCount = isChatOpen ? 0 : 1;
     } else {
       receiverConv.allMessages.push(newMessage._id);
 
       const participant = receiverConv.participants.find(
-        (p) => p.user.toString() === senderId
+        (p) => p.user.toString() === senderId.toString()
       );
 
       if (participant) {
         if (!isChatOpen) {
           participant.newMsgCount += 1;
-          receiverNewMsgCount = participant.newMsgCount;
         }
+        receiverNewMsgCount = participant.newMsgCount;
       } else {
         receiverConv.participants.push({
           user: senderId,
@@ -178,10 +179,16 @@ export const sendMessage = async (req, res) => {
 
     io.to(getSocketId(receiverId)).emit("Msg_from_sender", newMessage);
 
+    if (isChatOpen) {
+      io.to(getSocketId(senderId)).emit("Message_seen_instantly", { 
+        messageId: newMessage._id 
+      });
+    }
+
     if (!isChatOpen) {
       io.to(getSocketId(receiverId)).emit("New_Msg_Count", {
         _id: senderId,
-        newMsgCount: receiverNewMsgCount,
+        newMsgCount: receiverNewMsgCount, 
       });
     }
 
@@ -307,5 +314,25 @@ export const setMsgCountZero = async (req, res) => {
   }
 };
 
+export const markMessagesAsSeen = async (req, res) => {
+  try {
+    const receiverId = req.id; 
+    const senderId = req.params.id; 
 
+    const updated = await Message.updateMany(
+      { senderId, receiverId, status: { $ne: "seen" } }, 
+      { status: "seen" }
+    );
+
+    io.to(getSocketId(senderId)).emit("Messages_marked_seen", { 
+      receiverId,
+      senderId 
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false });
+  }
+};
 
