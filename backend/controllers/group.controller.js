@@ -212,6 +212,36 @@ export const resetGroupMsgCount = async (req, res) => {
   }
 }
 
+
+export const getGroupDetails = async (req, res) => {
+  try {
+    const groupId = req.params.id;
+    
+    const group = await Group.findById(groupId)
+      .populate("members", "_id username profilePhoto about")
+      .populate("admins", "_id");
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      group,
+    });
+  } catch (error) {
+    console.error("Fetch Group Details Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
 function getSocketId(userId) {
   return onlineUsers[userId];
 }

@@ -20,29 +20,35 @@ function NavBarforGroupPage() {
 
   return (
     <div className="select-none sticky z-[10] top-0">
-      <div className="p-2 flex items-center flex-row h-[8vh] md:h-[12vh] bg-indigo-400">
-        <ArrowLeft
-          className="text-white size-8"
+      <div className="p-2 flex items-center flex-row h-[8vh] md:h-[12vh] bg-indigo-400 shadow-md">
+        
+        <button 
           onClick={navigateToChatScreen}
-        />
+          className="p-2 rounded-full hover:bg-white/20 transition-colors active:scale-95"
+        >
+          <ArrowLeft className="text-white size-7 md:size-8" />
+        </button>
 
         <div className="relative ml-2">
-          <Link to={`/profile/${id}`}>
-            <div className="border-black h-11 w-11 rounded-full overflow-hidden border-2 cursor-pointer">
+          <Link to={`/group-profile/${id}`}>
+            <div className="border-white/80 h-11 w-11 rounded-full overflow-hidden border-2 cursor-pointer hover:border-white transition-colors shadow-sm">
               <img
-                src={logo}
-                alt="Profile-photo"
-                className="h-full w-full object-cover"
+                src={logo || defaultImg}
+                alt="Group Logo"
+                className="h-full w-full object-cover bg-white"
               />
             </div>
           </Link>
         </div>
 
         <div className="flex-1">
-          <div className="overflow-hidden cursor-pointer h-7 ml-4 text-white text-md font-bold inter text-xl">
-            {name}
-          </div>
+          <Link to={`/group-profile/${id}`}>
+            <div className="overflow-hidden cursor-pointer ml-4 text-white font-bold inter text-xl hover:text-white/90 transition-colors truncate">
+              {name}
+            </div>
+          </Link>
         </div>
+        
       </div>
     </div>
   );

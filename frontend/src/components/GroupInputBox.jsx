@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { baseurl } from "../../address/address";
-import { setGroupMsg, setMsg, setNewChat } from "../../redux/chatSlice";
+import { setGroupMsg, replaceTempGroupMsg } from "../../redux/chatSlice";
 import { Send } from "lucide-react";
-import { socket } from "../App";
 import { useParams } from "react-router-dom";
 
 function GroupInputBox() {
   const [msg, currMsg] = useState("");
-
   const dispatch = useDispatch();
+  const { id } = useParams();
+  
+  const user = useSelector((state) => state.auth.user);
 
   function handleKeyDown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -18,12 +19,29 @@ function GroupInputBox() {
       sendMsg();
     }
   }
-  const {id} = useParams();
+
   async function sendMsg() {
     if (msg.trim() === "") return;
 
     const messageToSend = msg;
-    currMsg("");
+    currMsg(""); 
+
+    const tempId = `temp-${Date.now()}`;
+
+    const optimisticMsg = {
+      _id: tempId,
+      senderId: {
+        _id: user._id,
+        username: user.username,
+        profilePhoto: user.profilePhoto,
+      },
+      message: messageToSend,
+      time: new Date().toISOString(),
+      status: "sending",
+    };
+
+    dispatch(setGroupMsg({ groupId: id, message: optimisticMsg }));
+
     try {
       const res = await axios.post(
         `${baseurl}/send-msg-to-group/${id}`,
@@ -33,8 +51,15 @@ function GroupInputBox() {
           withCredentials: true,
         }
       );
-      if(res.data.success){
-        dispatch(setGroupMsg(res.data.info));
+      
+      if (res.data.success) {
+        const realMessage = { ...res.data.info.message, status: "sent" };
+        
+        dispatch(replaceTempGroupMsg({
+          groupId: id,
+          tempId: tempId,
+          realMsg: realMessage
+        }));
       }
     } catch (err) {
       console.error(err);

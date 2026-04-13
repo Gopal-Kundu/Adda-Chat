@@ -60,7 +60,7 @@ function WelcomePage() {
                             </a>
 
                             <a
-                                href="https://github.com/Gopal-Kundu/ChatNow"
+                                href="https://github.com/Gopal-Kundu/Adda-Chat"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:text-white transition"

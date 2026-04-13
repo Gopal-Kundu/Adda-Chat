@@ -36,8 +36,7 @@ function GroupChatSection() {
       ref={containerRef}
       className="select-none webkit-scrollbar flex-1 overflow-y-auto"
     >
-      {
-      filteredMsgs.map((msg, idx) => (
+      {filteredMsgs.map((msg) => (
         <GroupMessage
           key={msg._id}
           user={msg?.senderId?._id === userId ? "true" : "false"}
@@ -45,6 +44,7 @@ function GroupChatSection() {
           createdAt={msg?.time}
           senderName={msg?.senderId?.username}
           senderLogo={msg?.senderId?.profilePhoto}
+          status={msg?.status || "sent"}
         />
       ))}
     </div>

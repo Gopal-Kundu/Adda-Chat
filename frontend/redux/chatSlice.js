@@ -4,10 +4,9 @@ const chatSlice = createSlice({
   name: "chats",
   initialState: {
     chats: [],
-    msgContainer: [], //For Normal Chats
-
+    msgContainer: [],
     groups: [],
-    groupMsgContainer: [] //For Group Chats
+    groupMsgContainer: []
   },
   reducers: {
     setChats: (state, action) => {
@@ -17,7 +16,13 @@ const chatSlice = createSlice({
       state.msgContainer = action.payload;
     },
     setMsg: (state, action) => {
-      state.msgContainer.push(action.payload);
+      const message = action.payload;
+      const exists = state.msgContainer.some(
+        (msg) => String(msg._id) === String(message._id)
+      );
+      if (!exists) {
+        state.msgContainer.push(message);
+      }
     },
     setNewChat: (state, action) => {
       const user = action.payload.user ?? action.payload;
@@ -33,7 +38,6 @@ const chatSlice = createSlice({
         });
       }
     },
-
     deleteUser: (state, action) => {
       state.chats = state.chats.filter(
         (chat) => chat.user._id !== action.payload
@@ -50,7 +54,6 @@ const chatSlice = createSlice({
       if (chat) {
         chat.newMsgCount = action.payload.newMsgCount;
       }
-
     },
     setNewMsgCountToZero: (state, action) => {
       const chat = state.chats.find(
@@ -59,12 +62,44 @@ const chatSlice = createSlice({
       if (chat) {
         chat.newMsgCount = 0;
       }
-
     },
+    updateMessagesToSeen: (state, action) => {
+      state.msgContainer.forEach((msg) => {
+        if (
+          String(msg.receiverId) === String(action.payload.receiverId) &&
+          String(msg.senderId) === String(action.payload.senderId) &&
+          msg.status !== "seen"
+        ) {
+          msg.status = "seen";
+        }
+      });
+    },
+    updateSingleMessageToSeen: (state, action) => {
+      const msgId = action.payload;
+      const msg = state.msgContainer.find((m) => String(m._id) === String(msgId));
+      if (msg && msg.status !== "seen") {
+        msg.status = "seen";
+      }
+    },
+    replaceTempMsg: (state, action) => {
+      const { tempId, realMsg } = action.payload;
+      
+      const realExists = state.msgContainer.some(
+        (msg) => String(msg._id) === String(realMsg._id)
+      );
 
+      const tempIndex = state.msgContainer.findIndex(
+        (msg) => String(msg._id) === String(tempId)
+      );
 
-
-    //Groups
+      if (tempIndex !== -1) {
+        if (realExists) {
+          state.msgContainer.splice(tempIndex, 1);
+        } else {
+          state.msgContainer[tempIndex] = realMsg;
+        }
+      }
+    },
     setGroups: (state, action) => {
       state.groups = action.payload;
     },
@@ -104,7 +139,6 @@ const chatSlice = createSlice({
         });
       }
     },
-
     deleteGroup: (state, action) => {
       const groupId = action.payload;
       state.groups = state.groups.filter(
@@ -114,7 +148,6 @@ const chatSlice = createSlice({
         (g) => String(g.groupId) !== String(groupId)
       );
     },
-
     increaseMsg: (state, action) => {
       let group = state.groups.find((perGroup) => String(perGroup._id) === String(action.payload.groupId));
 
@@ -128,39 +161,33 @@ const chatSlice = createSlice({
         group.count = 0;
       }
     },
+    replaceTempGroupMsg: (state, action) => {
+      const { groupId, tempId, realMsg } = action.payload;
+      
+      const group = state.groupMsgContainer.find(
+        (g) => String(g.groupId) === String(groupId)
+      );
+      
+      if (group) {
+        const realExists = group.messages.some(
+          (msg) => String(msg._id) === String(realMsg._id)
+        );
 
-    updateMessagesToSeen: (state, action) => {
-      state.msgContainer.forEach((msg) => {
-        if (String(msg.receiverId) === String(action.payload.receiverId)) {
-          msg.status = "seen";
+        const tempIndex = group.messages.findIndex(
+          (msg) => String(msg._id) === String(tempId)
+        );
+
+        if (tempIndex !== -1) {
+          if (realExists) {
+            group.messages.splice(tempIndex, 1);
+          } else {
+            group.messages[tempIndex] = realMsg;
+          }
         }
-      });
-    },
-
-    updateMessagesToSeen: (state, action) => {
-      state.msgContainer.forEach((msg) => {
-        if (
-          String(msg.receiverId) === String(action.payload.receiverId) &&
-          String(msg.senderId) === String(action.payload.senderId) &&
-          msg.status !== "seen"
-        ) {
-          msg.status = "seen";
-        }
-      });
-    },
-
-
-    replaceTempMsg: (state, action) => {
-      const { tempId, realMsg } = action.payload;
-      const index = state.msgContainer.findIndex((msg) => msg._id === tempId);
-      if (index !== -1) {
-        state.msgContainer[index] = realMsg;
       }
     },
-
-
   }
 });
 
-export const {replaceTempMsg, setChats, updateMessagesToSeen, updateSingleMessageToSeen, setGroupMsgToZero, setMsg, setAllMsgs, deleteGroup, setNewChat, deleteUser, setNewGroup, setGroupMsg, setGroupAllMsgs, setGroups, setNewMsgCount, setNewMsgCountToZero, increaseMsg } = chatSlice.actions;
+export const {replaceTempGroupMsg, replaceTempMsg, setChats, updateMessagesToSeen, updateSingleMessageToSeen, setGroupMsgToZero, setMsg, setAllMsgs, deleteGroup, setNewChat, deleteUser, setNewGroup, setGroupMsg, setGroupAllMsgs, setGroups, setNewMsgCount, setNewMsgCountToZero, increaseMsg } = chatSlice.actions;
 export default chatSlice.reducer;

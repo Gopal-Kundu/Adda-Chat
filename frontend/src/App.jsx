@@ -30,6 +30,7 @@ import { GroupChatPage } from "./pages/GroupChatPage";
 import WelcomePage from "./pages/WelcomePage";
 import Signup from "./pages/Signup";
 import ErrorPage from "./pages/ErrorPage";
+import GroupProfilePage from "./pages/GroupProfilePage";
 
 export let socket;
 
@@ -145,6 +146,7 @@ const App = () => {
         <Route path="/group-chat/:id" element={<GroupChatPage />} />
         <Route path="/profile" element={<UpdateProfilePage />} />
         <Route path="/profile/:id" element={<UpdateProfilePage />} />
+        <Route path="/group-profile/:id" element={<GroupProfilePage />} />
         <Route path="*" element={<ErrorPage/>}/>
       </Routes>
     </div>
